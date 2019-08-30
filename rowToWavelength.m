@@ -6,11 +6,11 @@ function w = rowToWavelength(N)
 
 x = [1:N]';
 
-x1 = 375;
-x2 = 424;
+x1 = 519;
+x2 = 613;
 
-y1 = 400;
-y2 = 500;
+y1 = 600;
+y2 = 700;
 
 A = [x1 1; x2 1];
 v = inv(A) * [y1; y2];
