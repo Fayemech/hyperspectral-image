@@ -22,7 +22,7 @@ function varargout = test2(varargin)
 
 % Edit the above text to modify the response to help test2
 
-% Last Modified by GUIDE v2.5 30-Aug-2019 11:21:05
+% Last Modified by GUIDE v2.5 03-Sep-2019 16:01:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -57,6 +57,7 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+
 % UIWAIT makes test2 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -82,6 +83,7 @@ function Untitled_1_Callback(hObject, eventdata, handles)
 % hObject    handle to Untitled_1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
 
 
 % --------------------------------------------------------------------
@@ -150,11 +152,12 @@ else
             blue(r,c) = sum(pix(l) .* i_b(l) ./ g(l));
         end
     end
-    global rgb;
+    global rgb h1 h2 ROIS;
     rgb = cat(3, red, green, blue);
-    subplot(211);
+    h1=axes('Position',[0.05 0.55 0.9 0.45]);
+    h2=axes('Position',[0.05 0.05 0.9 0.45]);
+    axes(h1)
     imshow(rgb);
-    handles.rgb = rgb;
     set(gca, 'DataAspectRatioMode','auto');
     
 end
@@ -175,23 +178,7 @@ function exit_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes during object creation, after setting all properties.
-function axes1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to axes1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-
-% Hint: place code in OpeningFcn to populate axes1
-
-
-% --- Executes during object creation, after setting all properties.
-function axes2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to axes2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: place code in OpeningFcn to populate axes2
 
 function pushbutton1_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton1 (see GCBO)
@@ -201,10 +188,9 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 function WindowKeyPressFcn(src, event, handles)
 i = event.Key;
-global rgb p target P;
+global rgb p target P h2 ROIS;
 if i == 'q'
     figure(2);
-    subplot(211);
     imshow(rgb);
     set(gca, 'DataAspectRatioMode','auto');
     a = roipoly();
@@ -227,13 +213,16 @@ if i == 'q'
         sp = sp + P(u, 3 : sie);
     end
     sp = sp / ind;
-    subplot(212);
+    ROIS = [ROIS sp];
+    close(figure(2));
+    axes(h2);
     plot(p, sp');
+    hold on;
     
     %csvwrite('sample0501.csv', P);
 elseif i == 'w'
     figure(3);
-    subplot(211);
+    set(gcf, 'position', [500 200 1000 1000]);
     imshow(rgb);
     set(gca, 'DataAspectRatioMode','auto');
     [b rect] = imcrop();
@@ -249,10 +238,24 @@ elseif i == 'w'
         end
     end
     spec = spec / (size(b, 1) * size(b, 2));
-    subplot(212);
+    close(figure(3));
+    axes(h2);
+    cla;
+    if (~isempty(ROIS))
+        plot(p, ROIS');
+    end
     plot(p, spec);
+    hold on;
+elseif i == 'e'
+    global ROIS spec;
+    ROIS = [];
+    cla;
+    if (~isempty(spec))
+        axes(h2);
+        plot(p, spec);
+    end
 else
-    warndlg('press a right key!','Warning');
+    warndlg('press a right key.','Warning');
     %disp('press a right key');
 end
 
@@ -274,11 +277,12 @@ end
 
 function ButttonUpFcn(src, event, handles)
 
-global target p;
+global target p h2;
 pt = get(gca,'CurrentPoint');
 x = pt(1,1);
 y = pt(1,2);
 x = round(x);
 y = round(y);
-subplot(212);
+axes(h2);
 plot(p, target(:, x, y));
+set(gca, 'DataAspectRatioMode','auto');
