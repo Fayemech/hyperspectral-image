@@ -137,8 +137,6 @@ else
     i_b = interpice1(x_b, y_b, p);
     w = sum(target,1);
     w = reshape(w,[size(w,2) size(w,3)])';
-    g = target(:,805, 201); %brightest point;
-    l = find(g > 0.002);
     red = zeros(size(w));
     blue = zeros(size(w));
     green = zeros(size(w));
@@ -147,17 +145,24 @@ else
     for r = 1 : size(target,3)
         for c = 1 : size(target,2)
             pix = target(:,c,r);
-            red(r,c) = sum(pix(l) .* i_r(l) ./ g(l));           
-            green(r,c) = sum(pix(l) .* i_g(l) ./ g(l));
-            blue(r,c) = sum(pix(l) .* i_b(l) ./ g(l));
+            red(r,c) = sum(pix .* i_r);           
+            green(r,c) = sum(pix .* i_g);
+            blue(r,c) = sum(pix .* i_b);
         end
     end
+    
     global rgb h1 h2 ROIS;
     rgb = cat(3, red, green, blue);
+    lm = max(max(rgb));
+    rgb(:,:,1) = rgb(:,:,1) / lm(1);
+    rgb(:,:,2) = rgb(:,:,2) / lm(2);
+    rgb(:,:,3) = rgb(:,:,3) / lm(3);
     h1=axes('Position',[0.05 0.55 0.9 0.45]);
     h2=axes('Position',[0.05 0.05 0.9 0.45]);
-    axes(h1)
+    axes(h1);
     imshow(rgb);
+    global spec;
+    spec = 0;
     set(gca, 'DataAspectRatioMode','auto');
     
 end
@@ -188,8 +193,38 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 function WindowKeyPressFcn(src, event, handles)
 i = event.Key;
-global rgb p target P h2 ROIS;
-if i == 'q'
+global rgb p target P h2 ROIS spec;
+if i == 'w'
+    figure(3);
+    set(gcf, 'position', [500 200 1000 1000]);
+    imshow(rgb);
+    set(gca, 'DataAspectRatioMode','auto');
+    [b rect] = imcrop();
+    x_axes = round(rect(1));
+    y_axes = round(rect(2));
+    wth = round(rect(3));
+    hgt = round(rect(4));
+    %index = 1;
+    %spec = zeros(size(target, 1), 1);
+    for r = x_axes : 1 : (x_axes + wth)
+        for c = y_axes : 1 : (y_axes + hgt)
+            %spec(index, :) = target(:, r, c);
+            spec = spec + target(:, r, c);
+        end
+    end
+    %spec = sum(spec, 1);
+    spec = spec / (size(b, 1) * size(b, 2));
+    close(figure(3));
+    axes(h2);
+    cla;
+    if (~isempty(ROIS))
+        plot(p, ROIS);
+    end
+    plot(p, spec);
+    hold on;
+    
+elseif i == 'q'
+    P = [];
     figure(2);
     imshow(rgb);
     set(gca, 'DataAspectRatioMode','auto');
@@ -207,52 +242,75 @@ if i == 'q'
             end
         end
     end
+    global save;
+    save = [];
+    save = P;
     ind = ind - 1;
-    sp = zeros((sie - 2), 1);   
-    for u = 1 : ind
-        sp = sp + P(u, 3 : sie);
+    ori = sum(P);
+    ori = ori / ind;
+    ori = ori(3 : end);
+    
+    e = ones(size(P, 2), 1)';
+    for i = 1 : size(P, 2)
+        cols = P(:, i);
+        e(i) = e(i) * std(cols);
     end
+    e = e(3: end);
+    for j = 1 : max(size(spec))
+        if spec(j) < 0.01
+            P(:, j) = 0;
+            e(j) = 0;
+        else
+            P(:, j) = P(:, j) ./ spec(j);
+        end
+    end
+    sp = sum(P);
     sp = sp / ind;
-    ROIS = [ROIS sp];
-    close(figure(2));
+    sp = sp(3 : end);
+    ROIS = [ROIS; sp];
+    close(figure(2))
+    %sp = sp ./ max(max(sp));
+    %for j = 1 : max(size(sp))
+    %    if spec(j) < 0.1
+    %       sp(j) = 0;
+    %    else
+    %       sp(j) = sp(j) ./ spec(j);
+    %    end
+    %end
     axes(h2);
-    plot(p, sp');
+    %e = std(sp)*ones(size(p));
+    if size(ROIS, 1) == 1
+        shadedErrorBar(p,sp,e, 'lineprops', '-r');
+        plot(p, ori, 'r');
+    elseif size(ROIS, 1) == 2
+        shadedErrorBar(p,sp,e, 'lineprops', '-g');
+        plot(p, ori, 'g');
+    elseif size(ROIS, 1) == 3
+        shadedErrorBar(p,sp,e, 'lineprops', '-b');
+        plot(p, ori, 'b');
+    elseif size(ROIS, 1) == 4
+        shadedErrorBar(p,sp,e, 'lineprops', '-y');
+        plot(p, ori, 'y');
+    elseif size(ROIS, 1) == 5
+        shadedErrorBar(p,sp,e, 'lineprops', '-c');
+        plot(p, ori, 'c');
+    else
+        shadedErrorBar(p,sp,e, 'lineprops', '-r');
+        plot(p, ori, 'r');
+    end
+    
+    %plot(p, sp);
     hold on;
     
     %csvwrite('sample0501.csv', P);
-elseif i == 'w'
-    figure(3);
-    set(gcf, 'position', [500 200 1000 1000]);
-    imshow(rgb);
-    set(gca, 'DataAspectRatioMode','auto');
-    [b rect] = imcrop();
-    x_axes = round(rect(1));
-    y_axes = round(rect(2));
-    wth = round(rect(3));
-    hgt = round(rect(4));
-    global spec;
-    spec = zeros(size(target, 1), 1);
-    for r = x_axes : 1 : (x_axes + wth)
-        for c = y_axes : 1 : (y_axes + hgt)
-            spec = spec + target(:, r, c);
-        end
-    end
-    spec = spec / (size(b, 1) * size(b, 2));
-    close(figure(3));
-    axes(h2);
-    cla;
-    if (~isempty(ROIS))
-        plot(p, ROIS');
-    end
-    plot(p, spec);
-    hold on;
 elseif i == 'e'
-    global ROIS spec;
     ROIS = [];
+    hold off;
     cla;
     if (~isempty(spec))
         axes(h2);
         plot(p, spec);
+        hold on;
     end
 else
     warndlg('press a right key.','Warning');
@@ -263,10 +321,10 @@ function save_Callback(hObject, eventdata, handles)
 % hObject    handle to save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global P spec;
+global save spec;
 c = [-1, -1];
 c = [c  spec'];
-c = [c ; P];
+c = [c ; save];
 [file,path] = uiputfile('*.csv');
 if file == 0
     return;
@@ -278,6 +336,7 @@ end
 function ButttonUpFcn(src, event, handles)
 
 global target p h2;
+
 pt = get(gca,'CurrentPoint');
 x = pt(1,1);
 y = pt(1,2);
