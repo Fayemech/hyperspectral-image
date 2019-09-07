@@ -325,12 +325,25 @@ global save spec;
 c = [-1, -1];
 c = [c  spec'];
 c = [c ; save];
-[file,path] = uiputfile('*.csv');
+[file,path] = uiputfile('*.tif');
 if file == 0
     return;
 else
    str=[path file];
-   csvwrite(str, c);
+   t = Tiff(str,'w');
+   tagstruct.ImageLength = size(c,1);
+   tagstruct.ImageWidth = size(c,2);
+   tagstruct.Photometric = Tiff.Photometric.MinIsWhite;
+   tagstruct.Compression = Tiff.Compression.LZW;
+   tagstruct.SampleFormat = 3;
+   tagstruct.BitsPerSample = 64;
+   tagstruct.SamplesPerPixel = 1;
+   tagstruct.RowsPerStrip = 16;
+   tagstruct.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+   tagstruct.Software = 'MATLAB';
+   t.setTag(tagstruct);
+   t.write(c);
+   t.close;
 end
 
 function ButttonUpFcn(src, event, handles)
