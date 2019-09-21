@@ -137,14 +137,14 @@ int main()
 			homo[i - 1] = homo[i - 1] * homo[i - 2];
 		}
 	}
-	Mat panorama(1000, 1000, CV_32S);
+	Mat panorama(1000, 1000, CV_64F);
 	// all clear
 	for (int i = 0; i < slice; i++) {
 		/* sum the hyperspectal to one row */
 		Mat tmp;
 		Mat stitchedimg;
-		reduce(spectral[i], tmp, 0, CV_REDUCE_SUM, CV_32S); //only keep int.
-		int* data = tmp.ptr<int>(0);
+		reduce(spectral[i], tmp, 0, CV_REDUCE_SUM, CV_64F); //only keep int.
+		double* data = tmp.ptr<double>(0);
 		for (int j = 0; j < wid; j++) {
 			Mat cor, rescor;
 			cor = (Mat_<double>(3, 1) << j, hei / 4 + 1, 1);
@@ -154,12 +154,14 @@ int main()
 			double divi = rescor.at <double>(2, 0);
 			c1 = floor(c1 / divi);
 			r1 = floor(r1 / divi);
-			cout << c1 << endl << r1 << endl;
+			
 			
 			if (c1 < 1 || r1 < 1 || c1 > 1500 || r1 > 1500) {
 				continue;
 			}
-			panorama.at<int>(r1, c1) = data[j];
+			panorama.at<double>(r1, c1) = data[j];
+			cout << panorama.at<double>(r1, c1) << endl;
+			cin.get();
 		}
 	}
 	
