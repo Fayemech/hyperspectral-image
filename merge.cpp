@@ -137,7 +137,7 @@ int main()
 			homo[i - 1] = homo[i - 1] * homo[i - 2];
 		}
 	}
-	Mat panorama(1000, 1000, CV_64F);
+	Mat panorama(hei, wid, CV_64F);
 	// all clear
 	for (int i = 0; i < slice; i++) {
 		/* sum the hyperspectal to one row */
@@ -156,13 +156,15 @@ int main()
 			r1 = floor(r1 / divi);
 			
 			
-			if (c1 < 1 || r1 < 1 || c1 > 1500 || r1 > 1500) {
+			if (c1 < 1 || r1 < 1 || c1 > wid || r1 > hei) {
 				continue;
 			}
 			panorama.at<double>(r1, c1) = data[j];
-			cout << panorama.at<double>(r1, c1) << endl;
-			cin.get();
+			//cout << panorama.at<double>(r1, c1) << endl;
+			//cin.get();
 		}
+		//cin.get();
+		
 	}
 	
 	return 0;
