@@ -57,7 +57,7 @@ int main()
 	vector<KeyPoint> points;
 	Mat des;
 	orb->detectAndCompute(img1, Mat(), points, des);
-	/* initialize the homo matrix to store all homo*/
+	/* initialize the homo matrix to store all homo */
 	vector<Mat> homo;
 	Mat E = Mat::eye(3, 3, CV_64F);
 	homo.push_back(E);
@@ -78,7 +78,7 @@ int main()
 		Mat centerline = img(roit);
 
 		spectral.push_back(centerline);
-
+		
 		/* still need to sum */
 
 		//Mat img2(obj.height() / 2, obj.width(), CV_8UC1, (unsigned char *)obj.constScanLine(row, frm2), obj.step());
@@ -137,14 +137,15 @@ int main()
 			homo[i - 1] = homo[i - 1] * homo[i - 2];
 		}
 	}
-	Mat panorama(hei, wid, CV_64F);
+	Mat panorama(hei, wid, CV_32F);
+	
 	// all clear
 	for (int i = 0; i < slice; i++) {
 		/* sum the hyperspectal to one row */
 		Mat tmp;
 		Mat stitchedimg;
-		reduce(spectral[i], tmp, 0, CV_REDUCE_SUM, CV_64F); //only keep int.
-		double* data = tmp.ptr<double>(0);
+		reduce(spectral[i], tmp, 0, CV_REDUCE_SUM, CV_32F); //
+		float* data = tmp.ptr<float>(0);
 		for (int j = 0; j < wid; j++) {
 			Mat cor, rescor;
 			cor = (Mat_<double>(3, 1) << j, hei / 4 + 1, 1);
@@ -156,11 +157,12 @@ int main()
 			r1 = floor(r1 / divi);
 			
 			
+			
 			if (c1 < 1 || r1 < 1 || c1 > wid || r1 > hei) {
 				continue;
 			}
-			panorama.at<double>(r1, c1) = data[j];
-			//cout << panorama.at<double>(r1, c1) << endl;
+			panorama.at<float>(r1, c1) = data[j];
+			//cout << panorama.at<float>(r1, c1) << endl;
 			//cin.get();
 		}
 		//cin.get();
